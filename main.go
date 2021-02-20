@@ -50,7 +50,6 @@ func getContact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var e Error
 	db := getConnection(dbPath)
-
 	defer db.Close()
 	
 	var id string = mux.Vars(r)["id"]
@@ -81,7 +80,7 @@ func getContact(w http.ResponseWriter, r *http.Request) {
 func addContact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var contact Contact
-	
+
 	_ = json.NewDecoder(r.Body).Decode(&contact)
 	fmt.Println(contact)
 	contact.ID = int(time.Now().UnixNano())
@@ -104,9 +103,62 @@ func addContact(w http.ResponseWriter, r *http.Request) {
 
 
 func updateContact(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	db := getConnection(dbPath)
+	var e Error
+	defer db.Close()
+	var contact Contact
+	var ID, err = strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		fmt.Println(err.Error())
+		e.Err = err.Error()
+		json.NewEncoder(w).Encode(e)
+		return
+	}
 
+	json.NewDecoder(r.Body).Decode(&contact)
+	err = updateContactInDB(db, ID, contact)
+	if err != nil {
+		fmt.Println(err.Error())
+		e.Err = err.Error()
+		json.NewEncoder(w).Encode(e)
+		return
+	}
+	contacts, err := getSingleContactFromDb(db, ID)
+	json.NewEncoder(w).Encode(contacts)
+	fmt.Println("UPDATE ONE Sucess")
 }
-func deleteContact(w http.ResponseWriter, r *http.Request) {}
+
+func deleteContact(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	db := getConnection(dbPath)
+	var e Error
+	defer db.Close()
+	var contact Contact
+	var ID, err = strconv.Atoi(mux.Vars(r)["id"])
+	if err != nil {
+		fmt.Println(err.Error())
+		e.Err = err.Error()
+		json.NewEncoder(w).Encode(e)
+		return
+	}
+	contacts, err := getSingleContactFromDb(db, ID)
+	if err != nil {
+		fmt.Println(err.Error())
+		e.Err = err.Error()
+		json.NewEncoder(w).Encode(e)
+		return
+	}
+	contact = contacts[0]
+	err = deleteSingleContact(db, ID)
+	if err != nil {
+		fmt.Println(err.Error())
+		e.Err = err.Error()
+		json.NewEncoder(w).Encode(e)
+		return
+	}
+	json.NewEncoder(w).Encode(contact)
+}
 
 
 

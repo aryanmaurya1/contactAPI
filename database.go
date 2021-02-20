@@ -20,7 +20,7 @@ func getConnection (path string) *sql.DB{
 }
 
 func createTableIfNotCreated(db *sql.DB)  {
-	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS contact (id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT UNIQUE, email TEXT NOT NULL UNIQUE)")
+	statement, err := db.Prepare("CREATE TABLE IF NOT EXISTS contact (id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT UNIQUE, email TEXT NOT NULL UNIQUE) ;")
 	if err != nil {
 		log.Fatal("Database Write Error !!")
 	}
@@ -28,7 +28,7 @@ func createTableIfNotCreated(db *sql.DB)  {
 }
 
 func insertContact(db *sql.DB ,contact Contact) error {
-	statement, err := db.Prepare("INSERT INTO contact (name, contact, email) VALUES (? ,? ,?)")
+	statement, err := db.Prepare("INSERT INTO contact (name, contact, email) VALUES (? ,? ,?) ;")
 	if err != nil {
 		fmt.Println("Error from Insertion Statement Creation")
 		fmt.Println(err.Error())
@@ -43,7 +43,7 @@ func insertContact(db *sql.DB ,contact Contact) error {
 }
 
 func getContactsFromDb(db *sql.DB) ([]Contact, error) {
-	rows, err := db.Query("SELECT id, name, contact, email FROM contact")
+	rows, err := db.Query("SELECT id, name, contact, email FROM contact ;")
 	var contacts []Contact
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func getContactsFromDb(db *sql.DB) ([]Contact, error) {
 }
 
 func getSingleContactFromDb(db *sql.DB, id int) ([]Contact, error) {
-	statement, err := db.Prepare("SELECT id, name, contact, email FROM contact WHERE id = ? ")
+	statement, err := db.Prepare("SELECT id, name, contact, email FROM contact WHERE id = ? ;")
 	if err != nil {
 		fmt.Println("Error In Getting Single Record")
 		fmt.Println(err.Error())
@@ -81,4 +81,30 @@ func getSingleContactFromDb(db *sql.DB, id int) ([]Contact, error) {
 		contacts = append(contacts, Contact{id, name, contact, email})
 	}
 	return contacts, nil
+}
+
+func updateContactInDB(db *sql.DB, id int, contact Contact) error {
+	statement, err := db.Prepare("UPDATE contact SET name = ? , contact = ? , email = ? WHERE id = ?;")
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	_, err = statement.Exec(contact.Name, contact.Contact, contact.Email, id)
+	if err != nil {
+		return nil
+	}
+	return err
+}
+
+func deleteSingleContact(db *sql.DB, id int) error{
+	statement, err := db.Prepare("DELETE FROM contact WHERE id = ?;")
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	_, err = statement.Exec(id)
+	if err != nil {
+		return nil
+	}
+	return err
 }
